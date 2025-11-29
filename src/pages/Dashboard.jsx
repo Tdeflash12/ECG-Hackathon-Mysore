@@ -18,6 +18,8 @@ export default function Dashboard() {
   const [deviceConnected, setDeviceConnected] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [importedImage, setImportedImage] = useState(null);
+  const [pvcCountState, setPvcCountState] = useState(0);
+  const [lastPvcTs, setLastPvcTs] = useState(null);
 
   async function analyze(value) {
     const num = Number(value);
@@ -41,6 +43,24 @@ export default function Dashboard() {
     // const data = await res.json();
     // setPrediction(data.prediction);
   }
+
+  useEffect(() => {
+    function onPvc(e) {
+      const det = e?.detail;
+      if (!det) return;
+      setPvcCountState(c => c + 1);
+      setLastPvcTs(det.timestamp || Date.now());
+      // optionally add an alert or log
+      console.log('PVC detected:', det);
+    }
+    function onPvcCount(e) {
+      const c = e?.detail?.count;
+      if (typeof c === 'number') setPvcCountState(c);
+    }
+    window.addEventListener('pvcDetected', onPvc);
+    window.addEventListener('pvcCount', onPvcCount);
+    return () => { window.removeEventListener('pvcDetected', onPvc); window.removeEventListener('pvcCount', onPvcCount); };
+  }, []);
 
   useEffect(() => {
     function onConnect() { setDeviceConnected(true); }
@@ -174,6 +194,13 @@ export default function Dashboard() {
                   // Toggle global simulation
                   if (isSimulating) window.dispatchEvent(new CustomEvent('stopSimulation')); else window.dispatchEvent(new CustomEvent('startSimulation'));
                 }}>{isSimulating ? 'Stop Simulation' : 'Simulate'}</button>
+                <button className="btn btn-outline-secondary" onClick={() => {
+                  // Manual PVC test (for demo): emit a pvcDetected event and a few ecg samples
+                  const ts = Date.now();
+                  const pvcBeat = [420, 430, 520, 720, 430, 410];
+                  pvcBeat.forEach((v, i) => setTimeout(() => window.dispatchEvent(new CustomEvent('ecgSample', { detail: { value: v, timestamp: Date.now() } })), i * 30));
+                  window.dispatchEvent(new CustomEvent('pvcDetected', { detail: { timestamp: ts, value: pvcBeat[3] } }));
+                }}>Simulate PVC</button>
                 <button className="btn btn-outline-secondary" onClick={() => { samplesRef.current = []; setSamples([]); }}>Clear</button>
                 <FileImporter onSamples={handleImportedSamples} onImage={handleImportedImage} />
               </div>
@@ -261,6 +288,14 @@ export default function Dashboard() {
                 }
                 return <div className="small text-muted">No diseases detected</div>;
               })()}
+            </div>
+          </div>
+          <div className="card p-3 shadow-sm" style={{ background: '#fff' }}>
+            <h4 style={{ margin: 0 }}>PVC Events</h4>
+            <div style={{ marginTop: 8 }}>
+              <div className="small text-muted">PVC Count</div>
+              <div style={{ fontWeight: 700, fontSize: '1.2rem' }}>{pvcCountState}</div>
+              <div className="small text-muted mt-2">Last detected: {lastPvcTs ? new Date(lastPvcTs).toLocaleTimeString() : '—'}</div>
             </div>
           </div>
           <div className="card p-3 shadow-sm" style={{ background: '#fff' }}>

@@ -7,6 +7,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import DemoModal from './components/DemoModal';
 import InfoChatbot from './components/InfoChatbot';
+import PvcDetector from './components/PvcDetector';
 
 
 
@@ -31,6 +32,7 @@ function AppInner() {
 				<Route path="/contact" element={<Contact />} />
 			</Routes>
 			<DemoModal />
+			<PvcDetector />
 			<InfoChatbot />
 			<Footer />
 		</div>

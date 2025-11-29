@@ -152,6 +152,26 @@ export default function SerialReader({ onData }) {
 					beatPattern.forEach((val, idx) => setTimeout(() => {
 						window.dispatchEvent(new CustomEvent('ecgSample', { detail: { value: val, timestamp: Date.now() } }));
 					}, idx * 30));
+
+					// Occasionally inject a premature beat (PVC) for demo/testing
+					const willPvc = Math.random() < 0.06; // ~6% chance per beat
+					if (willPvc) {
+						setTimeout(() => {
+							const pvcPattern = [
+								baseE - 6,
+								baseE - 1,
+								baseE + 10,
+								baseE + Math.floor(80 + Math.random() * 100), // a bigger R-like spike
+								baseE + 20,
+								baseE,
+							];
+							pvcPattern.forEach((val, idx) => setTimeout(() => {
+								window.dispatchEvent(new CustomEvent('ecgSample', { detail: { value: val, timestamp: Date.now() } }));
+							}, idx * 25));
+							// Let detectors know a PVC happened (simulated)
+							window.dispatchEvent(new CustomEvent('pvcDetected', { detail: { timestamp: Date.now(), rr: null, prevRR: null, value: pvcPattern[3] } }));
+						}, Math.floor(beatIntervalMs * 0.5));
+					}
 				}
 				// emit an immediate beat to kickstart UI
 				emitBeat();

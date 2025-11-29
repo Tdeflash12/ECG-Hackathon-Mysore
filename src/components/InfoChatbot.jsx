@@ -135,9 +135,21 @@ export default function InfoChatbot() {
       }
     }
     window.addEventListener('reading', onReading);
+    function onPvc(e) {
+      const det = e?.detail;
+      if (!det) return;
+      // Add a short, educational message and open the chat window
+      const time = new Date(det.timestamp || Date.now()).toLocaleTimeString();
+      const kb = KB.find(k => k.q === 'pvcs');
+      const msg = kb ? kb.a : 'PVC detected. Premature ventricular contractions are extra heartbeats that can be benign but should be evaluated if frequent or symptomatic.';
+      setOpen(true);
+      setMessages(prev => [...prev, { role: 'bot', text: `PVC detected (${time}). ${msg}` }]);
+    }
+    window.addEventListener('pvcDetected', onPvc);
     return () => {
       window.removeEventListener('simulateCase', onSim);
       window.removeEventListener('reading', onReading);
+      window.removeEventListener('pvcDetected', onPvc);
     };
   }, []);
 
@@ -204,6 +216,11 @@ export default function InfoChatbot() {
       setTimeout(() => send(), 80);
       return;
     }
+    if (action === 'pvcs') {
+      setText('what are pvcs');
+      setTimeout(() => send(), 80);
+      return;
+    }
   }
 
   if (!open) {
@@ -228,6 +245,7 @@ export default function InfoChatbot() {
           <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('analyze150') }}>Analyze 150 BPM</button>
           <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('afib') }}>What is AFib?</button>
           <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('seekhelp') }}>When to seek help</button>
+          <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('pvcs') }}>Explain PVCs</button>
         </div>
         <div className="chat-messages" ref={ref}>
           {messages.map((m, idx) => (
