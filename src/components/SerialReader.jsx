@@ -35,6 +35,8 @@ export default function SerialReader({ onData }) {
 					if (port.readable) {
 						portRef.current = port;
 						setIsConnected(true);
+						// Mark ML prediction port as connected for demo purposes
+						setTimeout(() => window.dispatchEvent(new CustomEvent('mlConnected', { detail: { port: 'P0RT' } })), 250);
 						setStatusText('connected');
 						// ensure UI components know a device is connected
 						window.dispatchEvent(new CustomEvent('deviceConnected'));
@@ -83,6 +85,8 @@ export default function SerialReader({ onData }) {
 			await port.open({ baudRate: 9600 });
 			portRef.current = port;
 			setIsConnected(true);
+			// Mark ML prediction port as connected for demo purposes
+			setTimeout(() => window.dispatchEvent(new CustomEvent('mlConnected', { detail: { port: 'P0RT' } })), 250);
 			window.dispatchEvent(new CustomEvent('deviceConnected'));
 			readLoopRef.current = true;
 			setStatusText('connected');
@@ -250,6 +254,8 @@ export default function SerialReader({ onData }) {
 			try { await reader.releaseLock(); } catch (e) { /* ignore */ }
 			readerRef.current = null;
 			setIsConnected(false);
+			// when disconnecting, also notify ML status as disconnected
+			window.dispatchEvent(new CustomEvent('mlDisconnected'));
 			// announce disconnect so other components can update
 			window.dispatchEvent(new CustomEvent('deviceDisconnected'));
 			setStatusText('disconnected');

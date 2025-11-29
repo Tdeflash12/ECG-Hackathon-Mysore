@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import SerialReader from '../components/SerialReader';
+import FileImporter from '../components/FileImporter';
 import BackendPoller from '../components/BackendPoller';
 import ECGChart from '../components/ECGChart';
 import HealthReport from '../components/HealthReport';
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const MAX_SAMPLES = 256;
   const [deviceConnected, setDeviceConnected] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [importedImage, setImportedImage] = useState(null);
 
   async function analyze(value) {
     const num = Number(value);
@@ -74,6 +76,18 @@ export default function Dashboard() {
     window.addEventListener('ecgSample', onEcg);
     return () => window.removeEventListener('ecgSample', onEcg);
   }, [logging]);
+
+  // Handle imported samples (CSV) to append to waveform buffer
+  function handleImportedSamples(vals) {
+    if (!vals || !Array.isArray(vals)) return;
+    // convert to numbers and append
+    samplesRef.current = [...samplesRef.current, ...vals].slice(-MAX_SAMPLES);
+    setSamples(samplesRef.current);
+  }
+
+  function handleImportedImage(url) {
+    setImportedImage(url);
+  }
 
   // Example: color-coded prediction
   const predictionColor =
@@ -146,7 +160,7 @@ export default function Dashboard() {
                 <div className="small text-muted">Real-time waveform from incoming sensor</div>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button className={`btn btn-${logging ? 'outline-danger' : 'primary'}`} onClick={() => setLogging(l => !l)}>{logging ? 'Stop logging' : 'Start logging'}</button>
+                    <button className={`btn btn-${logging ? 'outline-danger' : 'primary'}`} onClick={() => setLogging(l => !l)}>{logging ? 'Stop logging' : 'Start logging'}</button>
                 <button className="btn btn-outline-secondary" onClick={() => {
                   // Export buffered samples to CSV
                   if (!samplesRef.current || !samplesRef.current.length) return;
@@ -161,10 +175,17 @@ export default function Dashboard() {
                   if (isSimulating) window.dispatchEvent(new CustomEvent('stopSimulation')); else window.dispatchEvent(new CustomEvent('startSimulation'));
                 }}>{isSimulating ? 'Stop Simulation' : 'Simulate'}</button>
                 <button className="btn btn-outline-secondary" onClick={() => { samplesRef.current = []; setSamples([]); }}>Clear</button>
+                <FileImporter onSamples={handleImportedSamples} onImage={handleImportedImage} />
               </div>
             </div>
             <div style={{ marginTop: 12, height: 180 }}>
               <ECGChart data={samples} height={160} />
+              {importedImage && (
+                <div style={{ marginTop: 8, textAlign: 'center' }}>
+                  <div className="small text-muted">Imported Image Preview</div>
+                  <img src={importedImage} alt="Imported" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 8, marginTop: 8 }} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -267,7 +288,7 @@ export default function Dashboard() {
           ML Prediction
         </h3>
         <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' }}>
-          {prediction || 'Model not connected yet'}
+          {deviceConnected ? 'Model connected (P0RT)' : (prediction || 'Model not connected yet')}
         </p>
         <p style={{ color: '#6b7280', marginTop: '0.5rem', fontSize: '0.95rem' }}>
           Risk assessment based on live readings.

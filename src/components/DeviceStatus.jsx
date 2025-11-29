@@ -7,6 +7,7 @@ export default function DeviceStatus() {
 	const [lastEcg, setLastEcg] = useState(null);
 	const [error, setError] = useState(null);
 	const [isSimulating, setIsSimulating] = useState(false);
+	const [mlConnected, setMlConnected] = useState(false);
 
 	useEffect(() => {
 		function onConnect() { setIsConnected(true); }
@@ -16,6 +17,8 @@ export default function DeviceStatus() {
 		function onError(e) { setError(String(e?.detail?.message || 'Error')); }
 		function onSimStart() { setIsSimulating(true); }
 		function onSimStop() { setIsSimulating(false); }
+		function onMLConnect() { setMlConnected(true); }
+		function onMLDisconnect() { setMlConnected(false); }
 		setIsSupported(!!(typeof navigator !== 'undefined' && navigator.serial));
 		window.addEventListener('deviceConnected', onConnect);
 		window.addEventListener('deviceDisconnected', onDisconnect);
@@ -24,6 +27,8 @@ export default function DeviceStatus() {
 		window.addEventListener('serialError', onError);
 		window.addEventListener('simulationStarted', onSimStart);
 		window.addEventListener('simulationStopped', onSimStop);
+		window.addEventListener('mlConnected', onMLConnect);
+		window.addEventListener('mlDisconnected', onMLDisconnect);
 		return () => {
 			window.removeEventListener('deviceConnected', onConnect);
 			window.removeEventListener('deviceDisconnected', onDisconnect);
@@ -32,6 +37,8 @@ export default function DeviceStatus() {
 			window.removeEventListener('serialError', onError);
 			window.removeEventListener('simulationStarted', onSimStart);
 			window.removeEventListener('simulationStopped', onSimStop);
+			window.removeEventListener('mlConnected', onMLConnect);
+			window.removeEventListener('mlDisconnected', onMLDisconnect);
 			setError(null);
 		};
 	}, []);
@@ -48,6 +55,7 @@ export default function DeviceStatus() {
 			</div>
 			<div className="small text-muted">{lastBpm ? `${lastBpm} BPM` : ''}</div>
 			{error && <div style={{ marginLeft: 8 }} className="small text-danger">{error}</div>}
+			{mlConnected && <div className="small text-muted" style={{ marginLeft: 8 }}><strong>ML:</strong> P0RT connected</div>}
 			<button className="btn btn-outline-secondary btn-sm" onClick={async () => {
 				if (!navigator?.serial) return window.alert('Web Serial not supported');
 				try {
