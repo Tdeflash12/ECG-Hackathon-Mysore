@@ -33,7 +33,15 @@ export default function LivePreview({ bpm = 68 }) {
       if (p) setValue(p);
     }
     window.addEventListener('simulateCase', onSim);
-    return () => window.removeEventListener('simulateCase', onSim);
+    function onReading(e) {
+      const p = e?.detail?.bpm;
+      if (typeof p === 'number' && p > 0) setValue(p);
+    }
+    window.addEventListener('reading', onReading);
+    return () => {
+      window.removeEventListener('simulateCase', onSim);
+      window.removeEventListener('reading', onReading);
+    };
   }, []);
 
   // Update a fake waveform based on bpm to show activity in ECGChart.
@@ -46,18 +54,6 @@ export default function LivePreview({ bpm = 68 }) {
     }, 120);
     return () => clearInterval(id);
   }, [value, waveform]);
-
-  // Dispatch a reading event at most once per second so other components (HealthReport) can collect trends
-  useEffect(() => {
-    const id = setInterval(() => {
-      try {
-        window.dispatchEvent(new CustomEvent('reading', { detail: { bpm: value, timestamp: Date.now() } }));
-      } catch (err) {
-        void err; // ignore
-      }
-    }, 1000);
-    return () => clearInterval(id);
-  }, [value]);
 
   return (
     <div className="d-flex align-items-center" style={{ gap: '1rem', width: '100%', justifyContent: 'space-between' }}>

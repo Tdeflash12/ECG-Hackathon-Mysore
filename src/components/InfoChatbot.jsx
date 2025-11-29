@@ -19,14 +19,6 @@ const KB = [
   { q: 'heart attack signs', a: 'Signs of a heart attack include chest discomfort or pressure, pain radiating to jaw/arm/back, shortness of breath, nausea, or sudden sweating. If you suspect a heart attack, call emergency services immediately.', source: 'https://www.heart.org' },
   { q: 'when to see a doctor', a: 'Seek immediate medical care for severe chest pain, fainting, blackouts, severe shortness of breath, or rapid, irregular pulses with dizziness. For persistent or recurring palpitations, consult a cardiologist for ECG and evaluation.' },
   { q: 'prevention', a: 'Preventive steps include maintaining a healthy lifestyle (balanced diet, exercise, quitting smoking), managing blood pressure and cholesterol, controlling diabetes, and following prescribed cardiac medications.', source: 'https://www.heart.org' },
-  // Additional heart-disease related entries
-  { q: 'hypertension', a: 'Hypertension (high blood pressure) occurs when the force of blood against arterial walls is too high. Lifestyle changes (weight loss, reduced sodium, increased physical activity), along with appropriate medications, can control blood pressure. A hypertensive emergency (e.g., >180/120 mmHg) with symptoms like chest pain or neurological issues requires immediate emergency care.', source: 'https://www.cdc.gov' },
-  { q: 'cholesterol', a: 'High cholesterol contributes to plaque formation in arteries, increasing heart disease risk. Lifestyle changes and medications (such as statins) reduce risk; check lipids regularly and discuss targets with your clinician.', source: 'https://www.heart.org' },
-  { q: 'statins', a: 'Statins lower LDL cholesterol and reduce cardiovascular risk. They are commonly prescribed for people with established cardiovascular disease or high LDL. Side effects may occur; discuss risks and benefits with a clinician.', source: 'https://www.heart.org' },
-  { q: 'angina', a: 'Angina is chest discomfort from reduced blood flow to the heart. Stable angina occurs predictably with exertion and improves with rest; unstable angina is more concerning and may precede a heart attack. Seek immediate care for severe or worsening chest pain.', source: 'https://www.heart.org' },
-  { q: 'valve disease', a: 'Valvular heart disease affects the heart valves, causing symptoms like breathlessness, palpitations, or fainting in advanced stages. Regular follow-up with echocardiography and cardiology is recommended when valve disease is diagnosed.', source: 'https://www.heart.org' },
-  { q: 'cardiomyopathy', a: 'Cardiomyopathy is a disease of the heart muscle that can cause heart failure or arrhythmias. It may be genetic or acquired; evaluation includes ECG, echocardiography, and specialist care.', source: 'https://www.heart.org' },
-  { q: 'lifestyle', a: 'Lifestyle tips: follow a Mediterranean/DASH diet, limit added salt and processed foods, exercise regularly (150 minutes/week), maintain a healthy weight, stop smoking, and limit alcohol. These steps significantly lower cardiovascular risk.', source: 'https://www.cdc.gov' },
   { q: 'not medical advice', a: 'I am a demo assistant and do not provide medical diagnosis. For personal medical advice, consult a licensed clinician.' }
 ];
 // NOTE: Added source URLs for health entries to help demo with credible references (educational only)
@@ -75,19 +67,6 @@ function parseSymptoms(text) {
     return 'Lightheadedness or fainting can be a sign of low blood pressure, bradycardia, or other cardiac causes. If this happens suddenly or with chest pain, call emergency services. Otherwise consult a clinician for further evaluation.';
   }
 
-  // Detect formatted blood pressure, e.g., "BP 180/110" or "blood pressure 145/90"
-  const bpMatch = text.match(/\b(?:bp|blood pressure)\s*(\d{2,3})\s*\/\s*(\d{2,3})/i);
-  if (bpMatch) {
-    const sys = parseInt(bpMatch[1], 10);
-    const dias = parseInt(bpMatch[2], 10);
-    if (!isNaN(sys) && !isNaN(dias)) {
-      if (sys >= 180 || dias >= 120) {
-        return `A blood pressure reading of ${sys}/${dias} mmHg is dangerously high and may be a hypertensive emergency if accompanied by chest pain, shortness of breath, or neurological symptoms — seek immediate emergency care.`;
-      }
-      return `A blood pressure reading of ${sys}/${dias} mmHg is elevated; discuss lifestyle changes and follow-up with your clinician. If you have chest pain, shortness of breath, or neurological symptoms, seek urgent care.`;
-    }
-  }
-
   return null;
 }
 
@@ -104,16 +83,12 @@ function analyzeBPM(bpm) {
     return { text: `BPM ${bpm} is within the normal resting range (60-100 BPM). If you have symptoms like chest pain or sudden shortness of breath, seek urgent care.`, source: 'https://www.cdc.gov', risk: 'normal' };
   }
   if (bpm > 100 && bpm <= 130) {
-    return { text: `BPM ${bpm} indicates tachycardia (fast heart rate). Common causes include exercise, fever, anxiety, dehydration, stimulants (caffeine, nicotine), or underlying conditions. Try resting, hydrating, and avoiding stimulants; if you have chest pain, severe shortness of breath, or dizziness, seek immediate medical attention.`, source: 'https://www.heart.org', risk: 'moderate' };
+    return { text: `BPM ${bpm} indicates tachycardia (fast heart rate). It may be due to exercise, fever, anxiety, caffeine, or other causes. If you feel faint, dizzy, or have chest pain, seek immediate medical attention.`, source: 'https://www.heart.org', risk: 'moderate' };
   }
   if (bpm > 130) {
     return { text: `BPM ${bpm} is very fast and may be dangerous, especially when paired with chest pain, shortness of breath, lightheadedness, or fainting. Seek emergency medical care immediately.`, source: 'https://www.heart.org', risk: 'high' };
   }
   return { text: `BPM ${bpm} — please consult a clinician for a full assessment.`, risk: 'unknown' };
-}
-
-function precautionsMessage() {
-  return `Precautions & Prevention (educational only):\n\n• Lifestyle: follow a Mediterranean/DASH diet, limit sodium and processed foods, aim for 150 minutes of moderate exercise per week, maintain a healthy weight, avoid tobacco, and limit alcohol.\n\n• Monitoring: check your blood pressure and BPM regularly, log readings, and share trends with your clinician.\n\n• Medication adherence: if you are prescribed medications (e.g., antihypertensives, statins, anticoagulants), take them exactly as advised; don’t stop suddenly without clinical guidance.\n\n• Emergency signs: seek immediate care for severe chest pain, severe shortness of breath, fainting, sudden weakness or confusion, or very high blood pressure with symptoms.\n\n• Device and model guidance: verify device placement and calibration, and understand that an app/model is not a substitute for clinical diagnosis.`;
 }
 
 export default function InfoChatbot() {
@@ -146,7 +121,24 @@ export default function InfoChatbot() {
       }
     }
     window.addEventListener('simulateCase', onSim);
-    return () => window.removeEventListener('simulateCase', onSim);
+    function onReading(e) {
+      const bpm = e?.detail?.bpm;
+      if (typeof bpm === 'number') {
+        const a = analyzeBPM(bpm);
+        const botMsg = { role: 'bot', text: (typeof a === 'string' ? a : a.text) };
+        if (typeof a === 'object') {
+          if (a.source) botMsg.source = a.source;
+          if (a.risk) botMsg.risk = a.risk;
+        }
+        setOpen(true);
+        setMessages(prev => [...prev, { role: 'bot', text: `Live reading: ${bpm} BPM` }, botMsg]);
+      }
+    }
+    window.addEventListener('reading', onReading);
+    return () => {
+      window.removeEventListener('simulateCase', onSim);
+      window.removeEventListener('reading', onReading);
+    };
   }, []);
 
   function send() {
@@ -212,13 +204,6 @@ export default function InfoChatbot() {
       setTimeout(() => send(), 80);
       return;
     }
-    if (action === 'precautions') {
-      const p = precautionsMessage();
-      const botMsg = { role: 'bot', text: p, source: 'https://www.heart.org' };
-      setOpen(true);
-      setMessages(prev => [...prev, { role: 'user', text: 'precautions' }, botMsg]);
-      return;
-    }
   }
 
   if (!open) {
@@ -243,7 +228,6 @@ export default function InfoChatbot() {
           <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('analyze150') }}>Analyze 150 BPM</button>
           <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('afib') }}>What is AFib?</button>
           <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('seekhelp') }}>When to seek help</button>
-          <button className="btn btn-outline-primary btn-sm" onClick={() => { quickAction('precautions') }}>Precautions</button>
         </div>
         <div className="chat-messages" ref={ref}>
           {messages.map((m, idx) => (

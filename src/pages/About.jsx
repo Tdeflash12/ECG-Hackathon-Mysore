@@ -236,22 +236,22 @@ export default function About() {
 						<div className="card" style={{ padding: 12 }}>
 							<div style={{ fontWeight: 700 }}>Hackathon quick start</div>
 							<div style={{ color: '#475569', fontSize: 13, marginTop: 8 }}>
-								This project is based on modern, lightweight web and edge-friendly tools to make it easy to demo at hackathons and prototype integrations.
-									</div>
-									<div style={{ marginTop: 8, color: '#475569' }}>
-										<strong>Core technologies:</strong>
-										<ul style={{ marginTop: 6 }}>
-											<li><strong>Frontend:</strong> React (Vite) — fast hot-reload and component-based UI</li>
-											<li><strong>UI & Layout:</strong> Bootstrap for a clean base theme plus custom styles</li>
-											<li><strong>Charts:</strong> Chart.js with react-chartjs-2 for waveform visualization</li>
-											<li><strong>Hardware Input:</strong> Web Serial API for Arduino/microcontroller connectivity</li>
-											<li><strong>Mock Backend:</strong> Optional Express server for form endpoints and prediction mock</li>
-											<li><strong>Model Support:</strong> Designed to integrate TensorFlow, TFLite, ONNX models for on-device or server inference</li>
-										</ul>
-										<div style={{ marginTop: 6 }}>
-											The project favors an edge-first approach: convert models to TFLite for on-device demos, or host a model endpoint for server-side predictions. For demos, use the 'Simulate' helper to inject test BPMs and show chatbot guidance without hardware.
-										</div>
-									</div>
+								Clone the repo and run the dev server locally — it's ready for quick demos.
+							</div>
+							<pre style={{ background: '#f8fafc', padding: 12, borderRadius: 8, marginTop: 8, overflowX: 'auto' }}>
+																<code>{`git clone https://github.com/your-repo/mycardio.git
+cd mycardio
+npm install
+npm run dev
+
+/* Arduino serial example (send BPM as simple number per line) */
+// Arduino C++
+void loop() {
+	int bpm = analogRead(A0) / 10; // mock
+	Serial.println(bpm);
+	delay(250);
+}`}</code>
+							</pre>
 						</div>
 					</section>
 

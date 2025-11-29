@@ -46,4 +46,21 @@ export default function App() {
 }
 
 
-// styles removed - unused
+const styles = {
+	header: {
+		display: 'flex',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		padding: '1rem 2rem',
+		borderBottom: '1px solid #f1f5f9',
+		background: 'linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.88))',
+		position: 'sticky',
+		top: 0,
+		zIndex: 20,
+		backdropFilter: 'saturate(180%) blur(4px)'
+	},
+	nav: {
+		display: 'flex',
+		gap: '0.5rem',
+	},
+};

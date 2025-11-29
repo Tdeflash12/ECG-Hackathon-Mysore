@@ -1,4 +1,5 @@
 import React from 'react';
+import DeviceStatus from './DeviceStatus';
 import { NavLink } from 'react-router-dom';
 
 export default function Header() {
@@ -36,6 +37,38 @@ export default function Header() {
             <li className="nav-item ms-2">
               <button className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" onClick={() => window.dispatchEvent(new CustomEvent('openChat'))}>
                 <i className="bi bi-chat-dots me-1"></i> Chat
+              </button>
+            </li>
+            <li className="nav-item ms-2">
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <DeviceStatus />
+              </div>
+            </li>
+            <li className="nav-item ms-2">
+              <button className="btn btn-outline-primary btn-sm d-inline-flex align-items-center" onClick={async () => {
+                // Trigger a user-gesture port selection and open the port
+                try {
+                  if (!navigator?.serial) {
+                    return window.alert('Web Serial not supported in this browser');
+                  }
+                  const port = await navigator.serial.requestPort();
+                  await port.open({ baudRate: 9600 });
+                  // dispatch event with selected port for SerialReader to attach
+                  window.dispatchEvent(new CustomEvent('portSelected', { detail: { port } }));
+                } catch (err) {
+                  console.error('Port selection failed', err);
+                  const m = String(err?.message || err?.name || err);
+                  // suppress the noisy 'failed to open serial port' and permission/denial messages
+                  const suppressed = /failed to open serial port|failed to execute 'open' on 'serialport'|could not open|cannot open|open failed|in use|notallowederror|securityerror|notfounderror|permission denied|operation aborted/i.test(m);
+                  if (!suppressed) {
+                    window.alert('Failed to select port: ' + m);
+                  } else {
+                    // otherwise, quietly warn the console; the SerialReader handles fallback.
+                    console.warn('Port selection suppressed:', m);
+                  }
+                }
+              }}>
+                <i className="bi bi-usb-plug me-1"></i> Connect Arduino
               </button>
             </li>
           </ul>
